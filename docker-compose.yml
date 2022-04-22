@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:14-alpine3.15
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+  app:
+    container_name: nest_app
+    image: nestjs-api-prod:1.0.0
+    build:
+      context: .
+      target: production
+      dockerfile: ./Dockerfile
+    command: npm run start:prod
+    ports:
+      - "8080:8080"
+    networks:
+      - nestjs-network
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@postgres:5432/postgres?schema=public
+      SECRET: ${SECRET}
+      CDN_SPACE: galliary-images
+      CDN_REGION: nyc3
+      CDN_ENDPOINT: nyc3.digitaloceanspaces.com
+      CDN_URL: https://cdn.galliary.com
+      CDN_API_KEY: ${CDN_API_KEY}
+      CDN_API_SECRET: ${CDN_API_SECRET}
+    restart: unless-stopped
+
+volumes:
+  postgres: ~
+
+networks:
+  nestjs-network:

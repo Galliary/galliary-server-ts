@@ -1,0 +1,109 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AlbumModel {
+  authorId: String!
+  colors: [Int!]!
+  coverExt: String!
+  createdAt: DateTime!
+  description: String
+  groupId: String
+  id: String!
+  lockStatus: LockingStatus!
+  rating: SafetyRating!
+  title: String
+  updatedAt: DateTime!
+  userFavouriteIds: [String!]!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type ImageModel {
+  albumId: String!
+  authorId: String!
+  colors: [Int!]!
+  createdAt: DateTime!
+  description: String
+  groupId: String
+  id: String!
+  imageExt: String!
+  lockStatus: LockingStatus!
+  rating: SafetyRating!
+  title: String
+  updatedAt: DateTime!
+  userFavouriteIds: [String!]!
+}
+
+type JwtResponse {
+  accessToken: String!
+}
+
+enum LockingStatus {
+  HIDDEN
+  LOCKED
+  NONE
+}
+
+type Mutation {
+  createAlbum(colors: [Int!]!, coverExt: String!, coverImage: Upload, description: String, title: String): AlbumModel!
+  createImage(albumId: String!, colors: [Int!]!, description: String, imageFile: Upload, title: String): ImageModel!
+  createUser(bio: String, email: String!, nickname: String, password: String, username: String!): Boolean!
+  login(emailOrUsername: String!, password: String!): JwtResponse!
+  uploadAlbumCover(albumId: String!, coverImage: Upload): Boolean!
+}
+
+enum PremiumFeature {
+  CUSTOM_PROFILE
+  UNLIMITED_UPLOADS
+}
+
+type Query {
+  albums(amount: Int = 10, cursor: Int = 0): [AlbumModel!]!
+  images(amount: Int = 10, cursor: Int = 0): [ImageModel!]!
+  user(id: String): UserModel!
+}
+
+enum SafetyRating {
+  MATURE
+  NOT_SAFE
+  SAFE
+  TRUSTED
+  UNKNOWN
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+enum UserBadge {
+  ADMINISTRATOR
+  MATURE
+  MODERATOR
+  NOT_SAFE
+  PREMIUM
+  SAFE
+  SUPERADMIN
+  TRUSTED
+}
+
+type UserModel {
+  albums: [AlbumModel!]
+  avatarSourceId: String
+  avatarUrl: String
+  badges: [UserBadge!]!
+  bannerExt: String!
+  bio: String
+  createdAt: DateTime!
+  email: String!
+  id: String!
+  lockStatus: LockingStatus!
+  nickname: String
+  permissions: Int!
+  premiumFeatures: [PremiumFeature!]!
+  updatedAt: DateTime!
+  userFavouriteIds: [String!]!
+  username: String!
+}

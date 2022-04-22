@@ -1,0 +1,367 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --------------------------------------
+
+enum UserBadge {
+  PREMIUM // Has subscribed to the premium service
+  MATURE // Has 18+ NSFW content (moderator actionable)
+  NOT_SAFE // Has had around for a small amount of time, or many reports (moderator actionable)
+  SAFE // Has been around for 2-3 months and no reports (moderator actionable)
+  TRUSTED // (moderator actionable)
+  MODERATOR // Ability to add, remove
+  ADMINISTRATOR
+  SUPERADMIN // Total developer control of website
+}
+
+enum PremiumFeature {
+  CUSTOM_PROFILE
+  UNLIMITED_UPLOADS
+}
+
+enum SafetyRating {
+  TRUSTED // Uploaded by a trusted user (or manually marked as trusted)
+  SAFE // Uploaded by known users (or manually marked as safe)
+  UNKNOWN // Not bad but not good, neutral state for unknown images
+  NOT_SAFE // Potentially unsafe content
+  MATURE // 18+ NSFW content
+}
+
+enum LockingStatus {
+  LOCKED // Not visible by anyone, not editable by anyone, not linkable
+  HIDDEN // Not visible in any featured lists or search results, visible on user profiles or direct linking
+  NONE // No restrictions
+}
+
+enum UserConnectionType {
+  EMAIL
+
+  GOOGLE
+  DISCORD
+  TWITTER
+  LINKEDIN
+}
+
+enum GroupMemberRole {
+  NONE
+  ADMINISTRATOR // Has the ability to add and edit images/albums owned by the group
+  OWNER // Has ability to add and remove admins
+}
+
+model Group {
+  id        String   @id @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name        String @unique
+  displayName String
+
+  members GroupMember[]
+
+  images Image[]
+  albums Album[]
+
+  user                   User?                    @relation(fields: [userId], references: [id])
+  userId                 String?
+}
+
+model GroupMember {
+  id String @id @unique
+
+  role GroupMemberRole @default(NONE)
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  invitedAt DateTime @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model User {
+  id        String   @id @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  username String  @unique
+  nickname String?
+
+  bio String?
+
+  permissions    Int @default(130048) // 130048 = USER_DEFAULT_PERMISSIONS
+
+  email          String  @unique
+  hashedPassword String?
+
+  avatarUrl String?
+  avatarSourceId String? // Overrides the 'avatarUrl' from outside connections
+
+  bannerExt String @default("png") // The ext of the user's banner
+
+  badges UserBadge[]
+
+  lockStatus LockingStatus @default(NONE)
+
+  reports         Report[]         @relation(name: "UserWasReported")
+  createdReports  Report[]         @relation(name: "UserIsReporter")
+  memberships     GroupMember[]
+  connections     UserConnection[]
+  premiumFeatures PremiumFeature[]
+
+  tokens   Token[]
+  sessions Session[]
+
+  albums Album[]
+  images Image[]
+  groups Group[]
+
+  notifications          Notification[]
+  moderatorNotifications ModeratorNotifications[]
+
+  favouriteUsers  User[]  @relation(name: "UserFavouriteUsers")
+  favouriteAlbums Album[] @relation(name: "UserFavouriteAlbums")
+  favouriteImages Image[] @relation(name: "UserFavouriteImages")
+
+  userFavourites   User[]   @relation("UserFavouriteUsers", references: [id])
+  userFavouriteIds String[]
+}
+
+model UserConnection {
+  id        String   @id @default(cuid())
+  type UserConnectionType
+
+  email        String
+  handle       String? // The linkable profile connection handle
+
+  accessToken  String?
+  refreshToken String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@unique([email, type])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expiresAt          DateTime?
+  handle             String    @unique
+  hashedSessionToken String?
+  antiCSRFToken      String?
+  publicData         String?
+  privateData        String?
+
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+}
+
+model Token {
+  id        String   @id @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hashedToken String
+  type        String
+  expiresAt   DateTime
+  sentTo      String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@unique([hashedToken, type])
+}
+
+model Category {
+  slug    String @id @unique
+  display String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  album   Album  @relation(fields: [albumId], references: [id])
+  albumId String
+
+  image   Image  @relation(fields: [imageId], references: [id])
+  imageId String
+
+  lockStatus LockingStatus @default(NONE)
+  rating     SafetyRating  @default(UNKNOWN)
+
+  @@index([albumId, imageId])
+}
+
+model Image {
+  id        String   @id @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  imageExt String
+
+  colors   Int[]
+
+  title       String?
+  description String?
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  group   Group?  @relation(fields: [groupId], references: [id])
+  groupId String?
+
+  categories Category[]
+  reports Report[]
+
+  album   Album  @relation(fields: [albumId], references: [id])
+  albumId String
+
+  lockStatus LockingStatus @default(NONE)
+  rating     SafetyRating  @default(UNKNOWN)
+
+  userFavourites   User[]   @relation("UserFavouriteImages", references: [id])
+  userFavouriteIds String[]
+
+  @@index([id, authorId])
+}
+
+model Album {
+  id        String   @id @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  coverExt String
+  colors   Int[]
+
+  title       String?
+  description String?
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  group   Group?  @relation(fields: [groupId], references: [id])
+  groupId String?
+
+  images     Image[]
+  categories Category[]
+  reports Report[]
+
+  lockStatus LockingStatus @default(NONE)
+  rating     SafetyRating  @default(UNKNOWN)
+
+  userFavourites   User[]   @relation("UserFavouriteAlbums", references: [id])
+  userFavouriteIds String[]
+
+  @@index([id, authorId])
+}
+
+enum ReportReason {
+  MATURE
+  SPAM
+  VIOLENCE
+  HARASSMENT
+  OTHER
+}
+
+model Report {
+  id        String   @id @unique
+  createdAt DateTime @default(now())
+
+  album   Album?  @relation(fields: [albumId], references: [id])
+  albumId String?
+
+  image   Image?  @relation(fields: [imageId], references: [id])
+  imageId String?
+
+  user   User?   @relation("UserWasReported", fields: [userId], references: [id])
+  userId String?
+
+  reportee   User   @relation("UserIsReporter", fields: [reporteeId], references: [id])
+  reporteeId String
+
+  reason String
+
+  @@index([albumId, imageId, userId])
+}
+
+enum NotificationType {
+  RANDOM_INFO // Any sort of title & message combo
+
+  NEW_FAVOURITE
+  NEW_FOLLOWER
+
+  SUBSCRIPTION_ACTIVE
+  SUBSCRIPTION_EXPIRING_SOON
+  SUBSCRIPTION_EXPIRED
+
+  USER_MARKED_AS_MATURE_BY_MODERATOR
+  USER_MARKED_AS_NOT_MATURE_BY_MODERATOR
+
+  USER_MARKED_AS_TRUSTED_BY_MODERATOR
+  USER_MARKED_AS_NOT_TRUSTED_BY_MODERATOR
+
+  ALBUM_LOCKED_BY_MODERATOR
+  ALBUM_UNLOCKED_BY_MODERATOR
+  ALBUM_DELETED_BY_MODERATOR
+
+  IMAGE_LOCKED_BY_MODERATOR
+  IMAGE_UNLOCKED_BY_MODERATOR
+  IMAGE_DELETED_BY_MODERATOR
+
+  NEW_GROUP_INVITE
+
+  GROUP_MEMBER_JOINED
+  GROUP_MEMBER_LEFT
+
+  GROUP_MEMBER_INVITE_ACCEPTED
+  GROUP_MEMBER_INVITE_DECLINED
+  GROUP_MEMBER_INVITE_EXPIRED
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  type NotificationType
+
+  title   String
+  message String
+
+  user    User?   @relation(fields: [userId], references: [id])
+  userId  String?
+}
+
+enum ModeratorNotificationsType {
+  NEW_REPORT
+  SUSPICIOUS_ACTIVITY
+}
+
+model ModeratorNotifications {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  type ModeratorNotificationsType
+
+  title   String
+  message String
+
+  user    User?   @relation(fields: [userId], references: [id])
+  userId  String?
+}
