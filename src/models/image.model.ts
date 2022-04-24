@@ -1,7 +1,7 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql'
 import { Image, LockingStatus, SafetyRating } from '@prisma/client'
 
-@ObjectType()
+@ObjectType('Image')
 export class ImageModel implements Image {
   @Field(() => String)
   id: string
@@ -41,4 +41,10 @@ export class ImageModel implements Image {
 
   @Field(() => [String])
   userFavouriteIds: string[]
+}
+
+@ObjectType('RichImage')
+export class ImageModelWithExtras extends ImageModel {
+  @Field(() => String)
+  imageUrl: string
 }

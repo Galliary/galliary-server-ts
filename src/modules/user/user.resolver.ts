@@ -8,13 +8,17 @@ import {
 } from '@nestjs/graphql'
 import { UserService } from 'modules/user/user.service'
 import { UserModel } from 'models/user.model'
-import { CreateUserInput } from 'modules/user/user.inputs'
-import { JwtResponse } from 'modules/auth/strategies/jwt.strategy'
+import { CreateUserInput, UpdateUserInput } from 'modules/user/user.inputs'
+import { JwtResponse, JwtUser } from 'modules/auth/strategies/jwt.strategy'
 import { CurrentUser } from 'decorators/current-user.decorator'
 import { UseGuards } from '@nestjs/common'
 import { JwtAuthGuard } from 'modules/auth/strategies/jwt.guard'
 import { AlbumModel } from 'models/album.model'
 import { AlbumService } from 'modules/album/album.service'
+import { SearchUserDocument } from 'models/search-document.model'
+import { WithPermissions } from 'decorators/with-permissions.decorator'
+import { Permissions } from 'utils/permissions'
+import { PermissionGuard } from 'guards/permission.guard'
 
 @Resolver(() => UserModel)
 export class UserResolver {
@@ -23,11 +27,20 @@ export class UserResolver {
     private readonly albumService: AlbumService,
   ) {}
 
-  @Query(() => UserModel)
+  @Query(() => UserModel, { nullable: true })
   @UseGuards(JwtAuthGuard)
-  user(@CurrentUser() user, @Args('id', { nullable: true }) id?: string) {
+  user(
+    @CurrentUser() user: JwtUser,
+    @Args('id', { nullable: true }) id?: string,
+  ) {
     if (!id) return user
-    return this.service.byId(id)
+    return this.service.get(id)
+  }
+
+  @Query(() => [SearchUserDocument])
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  searchUsers(@Args('query') query: string): Promise<SearchUserDocument[]> {
+    return this.service.search(query)
   }
 
   @ResolveField(() => [AlbumModel])
@@ -37,8 +50,18 @@ export class UserResolver {
   }
 
   @Mutation(() => Boolean)
-  async createUser(@Args() input: CreateUserInput) {
+  createUser(@Args() input: CreateUserInput) {
     return this.service.create(input)
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(JwtAuthGuard)
+  updateUser(
+    @CurrentUser() author: JwtUser,
+    @Args('authorId') authorId: string,
+    @Args() input: UpdateUserInput,
+  ) {
+    return this.service.update(author, authorId, input)
   }
 
   @Mutation(() => JwtResponse)

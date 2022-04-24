@@ -2,30 +2,32 @@ version: '3.8'
 
 services:
   postgres:
-    container_name: postgres
     image: postgres:14-alpine3.15
+    network_mode: bridge
     restart: always
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres:/var/lib/postgresql/data
   app:
-    container_name: nest_app
     image: nestjs-api-prod:1.0.0
+    network_mode: bridge
     build:
       context: .
       target: production
       dockerfile: ./Dockerfile
-    command: npm run start:prod
+    command: npx prisma migrate deploy && npm run prod
+    depends_on:
+      - postgres
     ports:
       - "8080:8080"
-    networks:
-      - nestjs-network
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@postgres:5432/postgres?schema=public
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/postgres
       SECRET: ${SECRET}
       CDN_SPACE: galliary-images
       CDN_REGION: nyc3
@@ -37,6 +39,3 @@ services:
 
 volumes:
   postgres: ~
-
-networks:
-  nestjs-network:

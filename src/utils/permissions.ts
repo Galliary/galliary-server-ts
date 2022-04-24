@@ -1,32 +1,31 @@
 export enum Permissions {
   NONE = 0,
+
+  // UNSAFE_PERMISSIONS
   ADMINISTRATOR = 1 << 0,
 
   MANAGE_PERMISSIONS = 1 << 1,
-  VIEW_PERMISSIONS = 1 << 2,
 
-  MANAGE_USERS = 1 << 3,
+  MODERATE_ENTITIES = 1 << 2,
+  MODERATE_USERS = 1 << 3,
 
-  VIEW_AUDIT = 1 << 4,
-  MANAGE_AUDIT = 1 << 5,
+  MANAGE_REPORTS = 1 << 4,
+  VIEW_REPORTS = 1 << 5,
 
-  MANAGE_ENTITIES = 1 << 6,
+  MANAGE_MODERATORS = 1 << 6,
+  VIEW_MODERATORS = 1 << 7,
 
-  VIEW_REPORTS = 1 << 7,
-  MANAGE_REPORTS = 1 << 8,
+  MANAGE_AUDIT = 1 << 8,
+  VIEW_AUDIT = 1 << 9,
 
-  VIEW_MODERATORS = 1 << 9,
+  // SAFE PERMISSIONS
+  CREATE_FAVOURITES = 1 << 10,
+  CREATE_REPORTS = 1 << 11,
 
-  UPLOAD_ALBUMS = 1 << 10,
-  VIEW_ALBUMS = 1 << 11,
-
-  UPLOAD_IMAGES = 1 << 12,
-  VIEW_IMAGES = 1 << 13,
-
-  VIEW_USERS = 1 << 14,
-  FAVOURITE_ENTITIES = 1 << 15,
-
-  UPDATE_BANNER = 1 << 16,
+  DELETE_OWNED_ENTITIES = 1 << 12,
+  UPDATE_OWNED_ENTITIES = 1 << 13,
+  CREATE_ENTITIES = 1 << 14,
+  VIEW_ENTITIES = 1 << 15,
 }
 
 export class PermissionManager {
@@ -93,12 +92,12 @@ export class PermissionManager {
 export const USER_DEFAULT_PERMISSIONS = PermissionManager.add(
   Permissions.NONE,
   [
-    Permissions.UPDATE_BANNER,
-    Permissions.FAVOURITE_ENTITIES,
-    Permissions.VIEW_USERS,
-    Permissions.VIEW_IMAGES,
-    Permissions.UPLOAD_IMAGES,
-    Permissions.VIEW_ALBUMS,
-    Permissions.UPLOAD_ALBUMS,
+    // all safe permissions
+    Permissions.CREATE_FAVOURITES,
+    Permissions.CREATE_REPORTS,
+    Permissions.DELETE_OWNED_ENTITIES,
+    Permissions.UPDATE_OWNED_ENTITIES,
+    Permissions.CREATE_ENTITIES,
+    Permissions.VIEW_ENTITIES,
   ],
 )

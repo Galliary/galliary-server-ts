@@ -22,7 +22,7 @@ export class CreateUserInput {
   @MaxLength(64)
   @MinLength(2)
   @IsOptional()
-  nickname: string | null
+  nickname?: string | null
 
   @Field(() => String)
   @MaxLength(64)
@@ -34,14 +34,56 @@ export class CreateUserInput {
   @MaxLength(128)
   @MinLength(2)
   @IsOptional()
-  bio: string | null
+  bio?: string | null
 
   @Field(() => String, { nullable: true })
   @MaxLength(128)
   @MinLength(2)
-  @Matches(PASSWORD_MATCH_VALIDATION, {
-    message:
-      'Password must contain at least one number or special character, one uppercase letter and one lowercase letter',
-  })
+  @Matches(PASSWORD_MATCH_VALIDATION)
+  password: string
+}
+
+@ArgsType()
+@InputType()
+export class UpdateUserInput implements Partial<CreateUserInput> {
+  @Field(() => String, { nullable: true })
+  @MaxLength(64)
+  @MinLength(2)
+  @IsOptional()
+  nickname?: string | null
+
+  @Field(() => String, { nullable: true })
+  @MaxLength(128)
+  @MinLength(2)
+  @IsOptional()
+  bio?: string | null
+}
+
+@ArgsType()
+@InputType()
+export class UpdateUserEmailInput {
+  @Field(() => String)
+  @MaxLength(64)
+  @MinLength(2)
+  @IsEmail()
+  email: string
+}
+
+@ArgsType()
+@InputType()
+export class UpdateUserUsernameInput {
+  @Field(() => String)
+  @MaxLength(64)
+  @MinLength(2)
+  username: string
+}
+
+@ArgsType()
+@InputType()
+export class UpdateUserPasswordInput {
+  @Field(() => String, { nullable: true })
+  @MaxLength(128)
+  @MinLength(2)
+  @Matches(PASSWORD_MATCH_VALIDATION)
   password: string
 }

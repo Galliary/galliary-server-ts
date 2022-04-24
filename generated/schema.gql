@@ -2,7 +2,7 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type AlbumModel {
+type Album {
   authorId: String!
   colors: [Int!]!
   coverExt: String!
@@ -22,7 +22,7 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type ImageModel {
+type Image {
   albumId: String!
   authorId: String!
   colors: [Int!]!
@@ -49,11 +49,18 @@ enum LockingStatus {
 }
 
 type Mutation {
-  createAlbum(colors: [Int!]!, coverExt: String!, coverImage: Upload, description: String, title: String): AlbumModel!
-  createImage(albumId: String!, colors: [Int!]!, description: String, imageFile: Upload, title: String): ImageModel!
+  createAlbum(colors: [Int!]!, description: String, title: String): Album!
+  createImage(albumId: String!, colors: [Int!]!, description: String, imageExt: String, title: String): Image!
   createUser(bio: String, email: String!, nickname: String, password: String, username: String!): Boolean!
   login(emailOrUsername: String!, password: String!): JwtResponse!
-  uploadAlbumCover(albumId: String!, coverImage: Upload): Boolean!
+  reportAlbum(albumId: String!, reason: String!): Boolean!
+  reportImage(imageId: String!, reason: String!): Boolean!
+  reportUser(reason: String!, userId: String!): Boolean!
+  updateAlbum(albumId: String!, input: UpdateAlbumInput!): Boolean!
+  updateAlbumCover(albumId: String!, coverImage: Upload!): Boolean!
+  updateImage(imageId: String!, input: UpdateImageInput!): Boolean!
+  updateImageFile(imageFile: Upload!, imageId: String!): Boolean!
+  updateUser(authorId: String!, bio: String, nickname: String): Boolean!
 }
 
 enum PremiumFeature {
@@ -62,9 +69,68 @@ enum PremiumFeature {
 }
 
 type Query {
-  albums(amount: Int = 10, cursor: Int = 0): [AlbumModel!]!
-  images(amount: Int = 10, cursor: Int = 0): [ImageModel!]!
-  user(id: String): UserModel!
+  album(id: String!): RichAlbum
+  albums(amount: Int = 10, cursor: Int = 0): [RichAlbum!]!
+  image(id: String!): RichImage
+  images(amount: Int = 10, cursor: Int = 0): [RichImage!]!
+  report(id: String!): Report
+  reports: [Report!]!
+  reportsForAlbum(albumId: String!): [Report!]!
+  reportsForImage(imageId: String!): [Report!]!
+  reportsForUser(userId: String!): [Report!]!
+  searchAlbums(query: String!): [SearchDocument!]!
+  searchImages(query: String!): [SearchDocument!]!
+  searchUsers(query: String!): [SearchUserDocument!]!
+  user(id: String): User
+}
+
+type Report {
+  album: Album
+  albumId: String
+  assignee: User
+  assigneeId: String
+  createdAt: DateTime!
+  id: String!
+  image: Image
+  imageId: String
+  reason: String!
+  reportee: User
+  reporteeId: String
+  user: User
+  userId: String
+}
+
+type RichAlbum {
+  authorId: String!
+  colors: [Int!]!
+  coverExt: String!
+  coverUrl: String!
+  createdAt: DateTime!
+  description: String
+  groupId: String
+  id: String!
+  lockStatus: LockingStatus!
+  rating: SafetyRating!
+  title: String
+  updatedAt: DateTime!
+  userFavouriteIds: [String!]!
+}
+
+type RichImage {
+  albumId: String!
+  authorId: String!
+  colors: [Int!]!
+  createdAt: DateTime!
+  description: String
+  groupId: String
+  id: String!
+  imageExt: String!
+  imageUrl: String!
+  lockStatus: LockingStatus!
+  rating: SafetyRating!
+  title: String
+  updatedAt: DateTime!
+  userFavouriteIds: [String!]!
 }
 
 enum SafetyRating {
@@ -75,22 +141,44 @@ enum SafetyRating {
   UNKNOWN
 }
 
+type SearchDocument {
+  authorId: String!
+  authorName: String!
+  colors: [Int!]!
+  createdAt: DateTime!
+  description: String!
+  id: String!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type SearchUserDocument {
+  bio: String
+  createdAt: DateTime!
+  id: String!
+  nickname: String
+  updatedAt: DateTime!
+  username: String!
+}
+
+input UpdateAlbumInput {
+  colors: [Int!]
+  description: String
+  title: String
+}
+
+input UpdateImageInput {
+  colors: [Int!]
+  description: String
+  imageExt: String
+  title: String
+}
+
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
 
-enum UserBadge {
-  ADMINISTRATOR
-  MATURE
-  MODERATOR
-  NOT_SAFE
-  PREMIUM
-  SAFE
-  SUPERADMIN
-  TRUSTED
-}
-
-type UserModel {
-  albums: [AlbumModel!]
+type User {
+  albums: [Album!]
   avatarSourceId: String
   avatarUrl: String
   badges: [UserBadge!]!
@@ -106,4 +194,15 @@ type UserModel {
   updatedAt: DateTime!
   userFavouriteIds: [String!]!
   username: String!
+}
+
+enum UserBadge {
+  ADMINISTRATOR
+  MATURE
+  MODERATOR
+  NOT_SAFE
+  PREMIUM
+  SAFE
+  SUPERADMIN
+  TRUSTED
 }

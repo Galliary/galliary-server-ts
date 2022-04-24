@@ -1,9 +1,10 @@
 # compiled output
 /dist
 /node_modules
+/generated
 
 # Config
-.env/
+.env
 
 # Logs
 logs
