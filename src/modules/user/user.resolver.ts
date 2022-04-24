@@ -18,7 +18,6 @@ import { AlbumService } from 'modules/album/album.service'
 import { SearchUserDocument } from 'models/search-document.model'
 import { WithPermissions } from 'decorators/with-permissions.decorator'
 import { Permissions } from 'utils/permissions'
-import { PermissionGuard } from 'guards/permission.guard'
 
 @Resolver(() => UserModel)
 export class UserResolver {
