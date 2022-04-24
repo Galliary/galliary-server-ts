@@ -5,48 +5,63 @@ import { CurrentUser } from 'decorators/current-user.decorator'
 import { PermissionGuard } from 'guards/permission.guard'
 import { WithPermissions } from 'decorators/with-permissions.decorator'
 import { Permissions } from 'utils/permissions'
-import { UploadService } from 'services/upload.service'
 import { ImageService } from 'modules/image/image.service'
-import { ImageModel } from 'models/image.model'
-import { CreateImageInput } from 'modules/image/image.inputs'
+import { ImageModel, ImageModelWithExtras } from 'models/image.model'
+import { CreateImageInput, UpdateImageInput } from 'modules/image/image.inputs'
+import { JwtUser } from 'modules/auth/strategies/jwt.strategy'
+import { FileUpload, GraphQLUpload } from 'graphql-upload'
 import { GetImageArgs } from 'modules/image/image.args'
-import { extension } from 'mime-types'
-import { snowflake } from 'utils/snowflake'
+import { SearchDocument } from 'models/search-document.model'
 
 @Resolver(() => ImageModel)
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class ImageResolver {
-  constructor(
-    private readonly service: ImageService,
-    private readonly uploads: UploadService,
-  ) {}
+  constructor(private readonly service: ImageService) {}
 
-  @Query(() => [ImageModel])
-  @WithPermissions(Permissions.UPLOAD_IMAGES)
-  images(@Args() args: GetImageArgs): Promise<ImageModel[]> {
+  @Query(() => ImageModelWithExtras, { nullable: true })
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  image(@Args('id') id: string): Promise<ImageModelWithExtras> {
+    return this.service.get(id)
+  }
+
+  @Query(() => [ImageModelWithExtras])
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  images(@Args() args: GetImageArgs): Promise<ImageModelWithExtras[]> {
     return this.service.all(args)
   }
 
+  @Query(() => [SearchDocument])
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  searchImages(@Args('query') query: string): Promise<SearchDocument[]> {
+    return this.service.search(query)
+  }
+
   @Mutation(() => ImageModel)
-  @WithPermissions(Permissions.UPLOAD_IMAGES)
-  async createImage(
-    @CurrentUser() user,
-    @Args() { imageFile, ...input }: CreateImageInput,
+  @WithPermissions(Permissions.CREATE_ENTITIES)
+  createImage(
+    @CurrentUser() user: JwtUser,
+    @Args() input: CreateImageInput,
+  ): Promise<ImageModel> {
+    return this.service.create(user, input)
+  }
+
+  @Mutation(() => Boolean)
+  @WithPermissions(Permissions.UPDATE_OWNED_ENTITIES)
+  updateImage(
+    @CurrentUser() user: JwtUser,
+    @Args('imageId') imageId: string,
+    @Args('input') input: UpdateImageInput,
   ) {
-    const image = await imageFile
+    return this.service.update(user, imageId, input)
+  }
 
-    const imageId = snowflake()
-    const imageExt = extension(image.mimetype) || undefined
-
-    const imageData = await this.service.create(imageId, user, input, imageExt)
-
-    await this.uploads.uploadImageToAlbum(
-      imageId,
-      input.albumId,
-      user.id,
-      image,
-    )
-
-    return imageData
+  @Mutation(() => Boolean)
+  @WithPermissions(Permissions.UPDATE_OWNED_ENTITIES)
+  updateImageFile(
+    @CurrentUser() user: JwtUser,
+    @Args('imageId') imageId: string,
+    @Args('imageFile', { type: () => GraphQLUpload }) imageFile: FileUpload,
+  ): Promise<boolean> {
+    return this.service.updateImageFile(user, imageId, imageFile)
   }
 }

@@ -2,7 +2,7 @@ import { Field, Int, ObjectType } from '@nestjs/graphql'
 import { LockingStatus, PremiumFeature, User, UserBadge } from '@prisma/client'
 import { AlbumModel } from 'models/album.model'
 
-@ObjectType()
+@ObjectType('User')
 export class UserModel implements Omit<User, 'hashedPassword'> {
   @Field(() => String)
   id: string
@@ -53,7 +53,7 @@ export class UserModel implements Omit<User, 'hashedPassword'> {
   albums?: AlbumModel[]
 }
 
-@ObjectType()
+@ObjectType('___THIS_SHOULD_NOT_BE_VISIBLE_IN_GRAPHQL___')
 export class UserWithPasswordModel extends UserModel implements User {
   @Field(() => String, { nullable: true })
   hashedPassword: string | null

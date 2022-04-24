@@ -5,8 +5,9 @@ import {
   IsOptional,
   MaxLength,
   MinLength,
+  Validate,
 } from 'class-validator'
-import { FileUpload, GraphQLUpload } from 'graphql-upload'
+import { ExtValidator } from 'modules/album/album.validators'
 
 @ArgsType()
 @InputType()
@@ -33,6 +34,37 @@ export class CreateImageInput {
   @MinLength(1)
   albumId: string
 
-  @Field(() => GraphQLUpload, { nullable: true })
-  imageFile: FileUpload
+  @Field(() => String, { nullable: true })
+  @Validate(ExtValidator)
+  @IsOptional()
+  imageExt?: string
+}
+
+@ArgsType()
+@InputType()
+export class UpdateImageInput
+  implements Partial<Omit<CreateImageInput, 'albumId'>>
+{
+  @Field(() => String, { nullable: true })
+  @MaxLength(128)
+  @MinLength(3)
+  @IsOptional()
+  title?: string | null
+
+  @Field(() => String, { nullable: true })
+  @MaxLength(256)
+  @MinLength(3)
+  @IsOptional()
+  description?: string | null
+
+  @Field(() => [Int], { nullable: true })
+  @ArrayMinSize(3)
+  @ArrayMaxSize(3)
+  @IsOptional()
+  colors?: number[]
+
+  @Field(() => String, { nullable: true })
+  @Validate(ExtValidator)
+  @IsOptional()
+  imageExt?: string
 }

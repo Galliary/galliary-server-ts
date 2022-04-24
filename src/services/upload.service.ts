@@ -3,10 +3,10 @@ import { PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { extension, lookup } from 'mime-types'
 import { SUPPORTED_UPLOAD_MIME_TYPES } from 'consts'
 import { Injectable } from '@nestjs/common'
-import { GalliaryError, GError } from 'services/error.service'
 import { FileUpload } from 'graphql-upload'
-import { PassThrough } from 'stream'
 import { Upload } from '@aws-sdk/lib-storage'
+import { ApolloError, UserInputError } from 'apollo-server-express'
+import { UploadErrorIds } from 'errors'
 
 @Injectable()
 export class UploadService {
@@ -19,7 +19,7 @@ export class UploadService {
     },
   })
 
-  private params(
+  private static params(
     directory: string,
     name: string,
     file: FileUpload,
@@ -32,21 +32,13 @@ export class UploadService {
     }
   }
 
-  private isValidImage(file: FileUpload): GError | true {
-    if (!SUPPORTED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
-      return GError.ImageInvalidExtension
-    }
-
-    return true
-  }
-
   public async upload(
     directory: string,
     name: string,
     file: FileUpload,
   ): Promise<boolean> {
     try {
-      const params = this.params(directory, name, file)
+      const params = UploadService.params(directory, name, file)
 
       const parallel = new Upload({
         client: this.client,
@@ -60,7 +52,7 @@ export class UploadService {
     } catch (error) {
       console.error(error)
 
-      throw new GalliaryError(GError.InternalServerError)
+      throw new ApolloError(UploadErrorIds.GenericInternalError)
     }
   }
 
@@ -70,9 +62,8 @@ export class UploadService {
     authorId: string,
     file: FileUpload,
   ): Promise<boolean> {
-    const isValid = this.isValidImage(file)
-    if (isValid !== true) {
-      throw new GalliaryError(isValid)
+    if (!SUPPORTED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
+      throw new UserInputError(UploadErrorIds.InvalidExtension)
     }
 
     const extLookup = lookup(file.filename)
@@ -101,9 +92,8 @@ export class UploadService {
     authorId: string,
     file: FileUpload,
   ): Promise<boolean> {
-    const isValid = this.isValidImage(file)
-    if (isValid !== true) {
-      throw new GalliaryError(isValid)
+    if (!SUPPORTED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
+      throw new UserInputError(UploadErrorIds.InvalidExtension)
     }
 
     const extLookup = lookup(file.filename)
@@ -113,14 +103,34 @@ export class UploadService {
   }
 
   public uploadUserBanner(userId: string, file: FileUpload): Promise<boolean> {
-    const isValid = this.isValidImage(file)
-    if (isValid !== true) {
-      throw new GalliaryError(isValid)
+    if (!SUPPORTED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
+      throw new UserInputError(UploadErrorIds.InvalidExtension)
     }
 
     const extLookup = lookup(file.filename)
     const ext = extLookup && extension(extLookup)
 
     return this.upload(`users/${userId}`, `banner.${ext}`, file)
+  }
+
+  static getUrlForAlbumCover(
+    userId: string,
+    albumId: string,
+    coverExt: string,
+  ): string {
+    return `${ConfigService.get(
+      ConfigItem.CDNUrl,
+    )}/users/${userId}/albums/${albumId}/cover.${coverExt}`
+  }
+
+  static getUrlForImage(
+    userId: string,
+    albumId: string,
+    imageId: string,
+    imageExt: string,
+  ): string {
+    return `${ConfigService.get(
+      ConfigItem.CDNUrl,
+    )}/users/${userId}/albums/${albumId}/${imageId}.${imageExt}`
   }
 }

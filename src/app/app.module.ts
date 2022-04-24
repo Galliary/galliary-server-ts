@@ -13,6 +13,8 @@ import { JWT_EXPIRY } from 'consts'
 import { GraphQLError, GraphQLFormattedError } from 'graphql'
 import { GraphQLUpload, graphqlUploadExpress } from 'graphql-upload'
 import { ImageModule } from 'modules/image/image.module'
+import { ReportModule } from 'modules/report/report.module'
+import { MeiliSearchModule } from 'nestjs-meilisearch'
 
 @Module({
   imports: [
@@ -24,6 +26,11 @@ import { ImageModule } from 'modules/image/image.module'
     UserModule,
     ImageModule,
     AlbumModule,
+    ReportModule,
+    MeiliSearchModule.forRoot({
+      host: ConfigService.get(ConfigItem.MeiliSearchHost),
+      apiKey: ConfigService.get(ConfigItem.MeiliSearchKey),
+    }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       sortSchema: true,

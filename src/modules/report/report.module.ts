@@ -1,21 +1,23 @@
 import { Module } from '@nestjs/common'
 import { PrismaService } from 'services/prisma.service'
-import { UserService } from 'modules/user/user.service'
-import { UserResolver } from 'modules/user/user.resolver'
 import { AuthModule } from 'modules/auth/auth.module'
-import { AlbumService } from 'modules/album/album.service'
 import { UploadService } from 'services/upload.service'
+import { ReportResolver } from 'modules/report/report.resolver'
+import { ReportService } from 'modules/report/report.service'
+import { UserService } from 'modules/user/user.service'
 import { ImageService } from 'modules/image/image.service'
+import { AlbumService } from 'modules/album/album.service'
 
 @Module({
   imports: [AuthModule],
   providers: [
     UploadService,
     PrismaService,
-    AlbumService,
-    ImageService,
-    UserResolver,
     UserService,
+    ImageService,
+    AlbumService,
+    ReportResolver,
+    ReportService,
   ],
 })
-export class UserModule {}
+export class ReportModule {}

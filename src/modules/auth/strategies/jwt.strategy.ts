@@ -5,14 +5,16 @@ import { ConfigItem, ConfigService } from 'services/config.service'
 import { Field, ObjectType } from '@nestjs/graphql'
 import { UserModel } from 'models/user.model'
 import { UserService } from 'modules/user/user.service'
+import { PermissionManager } from 'utils/permissions'
 
 export interface JwtPayload {
   uid: string
   pem: number
 }
 
-export interface JwtUser extends UserModel {
+export interface JwtUser extends Omit<UserModel, 'permissions'> {
   jwt: JwtPayload
+  permissions: PermissionManager
 }
 
 @ObjectType()
@@ -33,7 +35,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   // figure out wtf this do
   async validate(payload: JwtPayload): Promise<JwtUser> {
-    const user = await this.user.byId(payload.uid)
-    return { ...user, jwt: payload }
+    const user = await this.user.get(payload.uid)
+    return {
+      ...user,
+      permissions: new PermissionManager(user.permissions),
+      jwt: payload,
+    }
   }
 }

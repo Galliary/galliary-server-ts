@@ -116,6 +116,8 @@ model User {
 
   reports         Report[]         @relation(name: "UserWasReported")
   createdReports  Report[]         @relation(name: "UserIsReporter")
+  assignedReports Report[]         @relation(name: "ModeratorIsAssigned") // For moderators
+
   memberships     GroupMember[]
   connections     UserConnection[]
   premiumFeatures PremiumFeature[]
@@ -292,6 +294,10 @@ model Report {
 
   user   User?   @relation("UserWasReported", fields: [userId], references: [id])
   userId String?
+
+  // For moderators
+  assignee User? @relation("ModeratorIsAssigned", fields: [assigneeId], references: [id])
+  assigneeId String?
 
   reportee   User   @relation("UserIsReporter", fields: [reporteeId], references: [id])
   reporteeId String

@@ -1,7 +1,7 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql'
 import { Album, LockingStatus, SafetyRating } from '@prisma/client'
 
-@ObjectType()
+@ObjectType('Album')
 export class AlbumModel implements Album {
   @Field(() => String)
   id: string
@@ -38,4 +38,10 @@ export class AlbumModel implements Album {
 
   @Field(() => [String])
   userFavouriteIds: string[]
+}
+
+@ObjectType('RichAlbum')
+export class AlbumModelWithExtras extends AlbumModel {
+  @Field(() => String)
+  coverUrl: string
 }
