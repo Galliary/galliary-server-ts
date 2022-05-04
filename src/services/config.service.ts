@@ -18,6 +18,12 @@ export enum ConfigItem {
 
   MeiliSearchHost = 'MEILISEARCH_HOST',
   MeiliSearchKey = 'MEILISEARCH_KEY',
+
+  DiscordClientId = 'DISCORD_CLIENT_ID',
+  DiscordClientSecret = 'DISCORD_CLIENT_SECRET',
+  DiscordCallbackUri = 'DISCORD_CALLBACK_URI',
+
+  AuthRedirect = 'AUTH_REDIRECT',
 }
 
 export class ConfigService {

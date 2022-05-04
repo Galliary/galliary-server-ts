@@ -10,8 +10,8 @@ export class SearchDocument {
   description: string
   @Field(() => String)
   authorId: string
-  @Field(() => String)
-  authorName: string
+  // @Field(() => String)
+  // authorName: string
   @Field(() => Date)
   createdAt: Date
   @Field(() => Date)

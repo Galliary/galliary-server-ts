@@ -7,26 +7,27 @@ import { AppService } from 'app/app.service'
 import { AlbumModule } from 'modules/album/album.module'
 import { UserModule } from 'modules/user/user.module'
 import { PassportModule } from '@nestjs/passport'
-import { JwtModule } from '@nestjs/jwt'
 import { ConfigItem, ConfigService } from 'services/config.service'
-import { JWT_EXPIRY } from 'consts'
 import { GraphQLError, GraphQLFormattedError } from 'graphql'
 import { GraphQLUpload, graphqlUploadExpress } from 'graphql-upload'
 import { ImageModule } from 'modules/image/image.module'
 import { ReportModule } from 'modules/report/report.module'
 import { MeiliSearchModule } from 'nestjs-meilisearch'
+import { ThrottlerModule } from '@nestjs/throttler'
+import { AuthModule } from 'modules/auth/auth.module'
 
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: ConfigService.get(ConfigItem.Secret),
-      signOptions: { expiresIn: JWT_EXPIRY },
-    }),
+    AuthModule,
     UserModule,
     ImageModule,
     AlbumModule,
     ReportModule,
+    ThrottlerModule.forRoot({
+      ttl: 60,
+      limit: 5,
+    }),
     MeiliSearchModule.forRoot({
       host: ConfigService.get(ConfigItem.MeiliSearchHost),
       apiKey: ConfigService.get(ConfigItem.MeiliSearchKey),

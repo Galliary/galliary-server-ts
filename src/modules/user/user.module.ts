@@ -6,9 +6,10 @@ import { AuthModule } from 'modules/auth/auth.module'
 import { AlbumService } from 'modules/album/album.service'
 import { UploadService } from 'services/upload.service'
 import { ImageService } from 'modules/image/image.service'
+import { TokenModule } from 'modules/token/token.module'
 
 @Module({
-  imports: [AuthModule],
+  imports: [TokenModule, AuthModule],
   providers: [
     UploadService,
     PrismaService,

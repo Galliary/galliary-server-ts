@@ -143,7 +143,6 @@ enum SafetyRating {
 
 type SearchDocument {
   authorId: String!
-  authorName: String!
   colors: [Int!]!
   createdAt: DateTime!
   description: String!

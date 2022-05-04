@@ -37,7 +37,6 @@ export class ImageService {
       title: data.title,
       description: data.description,
       authorId: data.authorId,
-      authorName: author.username,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       colors: data.colors,

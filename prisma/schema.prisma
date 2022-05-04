@@ -122,7 +122,6 @@ model User {
   connections     UserConnection[]
   premiumFeatures PremiumFeature[]
 
-  tokens   Token[]
   sessions Session[]
 
   albums Album[]
@@ -174,22 +173,6 @@ model Session {
 
   user   User?   @relation(fields: [userId], references: [id])
   userId String?
-}
-
-model Token {
-  id        String   @id @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  hashedToken String
-  type        String
-  expiresAt   DateTime
-  sentTo      String
-
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-
-  @@unique([hashedToken, type])
 }
 
 model Category {

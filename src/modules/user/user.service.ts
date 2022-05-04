@@ -6,33 +6,30 @@ import { omit } from 'lodash'
 import { snowflake } from 'utils/snowflake'
 import { hashPassword } from 'utils/passwords'
 import { AuthenticationError, UserInputError } from 'apollo-server-express'
-import { AuthService } from 'modules/auth/auth.service'
 import { JwtResponse, JwtUser } from 'modules/auth/strategies/jwt.strategy'
 import { compare } from 'bcrypt'
 import { Permissions, USER_DEFAULT_PERMISSIONS } from 'utils/permissions'
 import { InjectMeiliSearch } from 'nestjs-meilisearch'
 import { Hits, MeiliSearch } from 'meilisearch'
-import { Image, User } from '@prisma/client'
-import { ImageModel } from 'models/image.model'
-import {
-  SearchDocument,
-  SearchUserDocument,
-} from 'models/search-document.model'
+import { User, UserConnectionType } from '@prisma/client'
+import { SearchUserDocument } from 'models/search-document.model'
 import { SearchIndex } from 'utils/search'
-import { UpdateImageInput } from 'modules/image/image.inputs'
-import { ImageErrorIds, UserErrorIds } from 'errors'
+import { UserErrorIds } from 'errors'
 import { passValue } from 'utils/handlers'
+import { TokenService } from 'modules/token/token.service'
+import { Profile as DiscordProfile } from 'passport-discord'
+import { AccessTokens } from 'modules/auth/auth.controller'
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auth: AuthService,
+    private readonly tokens: TokenService,
     @InjectMeiliSearch()
     private readonly meili: MeiliSearch,
   ) {}
 
-  static toIndexDocument(user: User | UserModel | JwtUser): SearchUserDocument {
+  static toIndexDocument(user: User | UserModel): SearchUserDocument {
     return {
       id: user.id,
       username: user.username,
@@ -71,7 +68,7 @@ export class UserService {
     const passwordIsMatch = await compare(password, user.hashedPassword)
 
     if (passwordIsMatch) {
-      return this.auth.login(user)
+      return this.tokens.create(user)
     }
 
     throw new AuthenticationError('Failed to authenticate user')
@@ -87,6 +84,19 @@ export class UserService {
     return this.prisma.user.findFirst({
       where: {
         OR: [{ username: emailOrUsername }, { email: emailOrUsername }],
+      },
+    })
+  }
+
+  byConnectionId(id: string, type: UserConnectionType) {
+    return this.prisma.user.findFirst({
+      where: {
+        connections: {
+          some: {
+            id,
+            type,
+          },
+        },
       },
     })
   }
@@ -115,6 +125,30 @@ export class UserService {
       })
 
     return true
+  }
+
+  async createByDiscordConnection(input: DiscordProfile, tokens: AccessTokens) {
+    const id = snowflake()
+
+    return this.prisma.user.create({
+      data: {
+        id,
+        username: id,
+        nickname: input.username,
+        email: input.email,
+        avatarUrl: `https://cdn.discordapp.com/avatars/${input.id}/${input.avatar}.webp`,
+        permissions: USER_DEFAULT_PERMISSIONS,
+        connections: {
+          create: {
+            id: input.id,
+            type: UserConnectionType.DISCORD,
+            email: input.email,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+          },
+        },
+      },
+    })
   }
 
   update(author: JwtUser, userId: string, input: UpdateUserInput) {

@@ -7,9 +7,10 @@ import { ReportService } from 'modules/report/report.service'
 import { UserService } from 'modules/user/user.service'
 import { ImageService } from 'modules/image/image.service'
 import { AlbumService } from 'modules/album/album.service'
+import { TokenModule } from 'modules/token/token.module'
 
 @Module({
-  imports: [AuthModule],
+  imports: [TokenModule, AuthModule],
   providers: [
     UploadService,
     PrismaService,

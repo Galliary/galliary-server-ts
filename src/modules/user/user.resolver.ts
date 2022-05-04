@@ -12,7 +12,7 @@ import { CreateUserInput, UpdateUserInput } from 'modules/user/user.inputs'
 import { JwtResponse, JwtUser } from 'modules/auth/strategies/jwt.strategy'
 import { CurrentUser } from 'decorators/current-user.decorator'
 import { UseGuards } from '@nestjs/common'
-import { JwtAuthGuard } from 'modules/auth/strategies/jwt.guard'
+import { JwtAuthGuard } from 'modules/auth/guards/jwt.guard'
 import { AlbumModel } from 'models/album.model'
 import { AlbumService } from 'modules/album/album.service'
 import { SearchUserDocument } from 'models/search-document.model'
@@ -32,8 +32,7 @@ export class UserResolver {
     @CurrentUser() user: JwtUser,
     @Args('id', { nullable: true }) id?: string,
   ) {
-    if (!id) return user
-    return this.service.get(id)
+    return this.service.get(id ?? user.id)
   }
 
   @Query(() => [SearchUserDocument])

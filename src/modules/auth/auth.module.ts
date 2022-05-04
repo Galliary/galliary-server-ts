@@ -1,32 +1,29 @@
 import { Module } from '@nestjs/common'
 import { AuthService } from 'modules/auth/auth.service'
-import { JwtModule } from '@nestjs/jwt'
-import { ConfigItem, ConfigService } from 'services/config.service'
-import { JwtStrategy } from 'modules/auth/strategies/jwt.strategy'
 import { UserService } from 'modules/user/user.service'
 import { PrismaService } from 'services/prisma.service'
 import { AlbumService } from 'modules/album/album.service'
 import { PassportModule } from '@nestjs/passport'
-import { JWT_EXPIRY } from 'consts'
 import { UploadService } from 'services/upload.service'
+import { AuthController } from 'modules/auth/auth.controller'
+import { DiscordOAuthStrategy } from 'modules/auth/strategies/discord.o-auth.strategy'
+import { TokenModule } from 'modules/token/token.module'
 
 @Module({
   imports: [
+    TokenModule,
     PassportModule.register({
       session: true,
     }),
-    JwtModule.register({
-      secret: ConfigService.get(ConfigItem.Secret),
-      signOptions: { expiresIn: JWT_EXPIRY },
-    }),
   ],
+  controllers: [AuthController],
   providers: [
-    AuthService,
     UploadService,
     AlbumService,
     PrismaService,
     UserService,
-    JwtStrategy,
+    AuthService,
+    DiscordOAuthStrategy,
   ],
   exports: [AuthService],
 })

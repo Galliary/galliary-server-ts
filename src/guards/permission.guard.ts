@@ -5,6 +5,8 @@ import { PermissionManager, Permissions } from 'utils/permissions'
 import { Reflector } from '@nestjs/core'
 import { UserModel } from 'models/user.model'
 import { ForbiddenError } from 'apollo-server-express'
+import { UserService } from 'modules/user/user.service'
+import { JwtPayload, JwtUser } from 'modules/auth/strategies/jwt.strategy'
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -15,9 +17,7 @@ export class PermissionGuard implements CanActivate {
 
   constructor(private readonly reflector: Reflector) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const permissions = this.reflector.get<Permissions[]>(
       'permissions',
       context.getHandler(),
@@ -27,10 +27,9 @@ export class PermissionGuard implements CanActivate {
     }
 
     const ctx = GqlExecutionContext.create(context)
-    const user = ctx.getContext().req.user as UserModel
-    const userPermissions = new PermissionManager(user.permissions)
+    const user = ctx.getContext().req.user as JwtUser
 
-    const hasPermission = userPermissions.has(...permissions)
+    const hasPermission = user.permissions.has(...permissions)
 
     if (hasPermission) {
       return true
