@@ -52,6 +52,9 @@ type Mutation {
   createAlbum(colors: [Int!]!, description: String, title: String): Album!
   createImage(albumId: String!, colors: [Int!]!, description: String, imageExt: String, title: String): Image!
   createUser(bio: String, email: String!, nickname: String, password: String, username: String!): Boolean!
+  favouriteAlbum(albumId: String!, unfavourite: Boolean!): Boolean!
+  favouriteImage(imageId: String!, unfavourite: Boolean!): Boolean!
+  favouriteUser(unfavourite: Boolean!, userId: String!): Boolean!
   login(emailOrUsername: String!, password: String!): JwtResponse!
   reportAlbum(albumId: String!, reason: String!): Boolean!
   reportImage(imageId: String!, reason: String!): Boolean!
@@ -185,7 +188,11 @@ type User {
   bio: String
   createdAt: DateTime!
   email: String!
+  favouriteAlbums: [Album!]
+  favouriteImages: [Image!]
+  favouriteUsers: [User!]
   id: String!
+  images: [Image!]
   lockStatus: LockingStatus!
   nickname: String
   permissions: Int!

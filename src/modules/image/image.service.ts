@@ -155,6 +155,16 @@ export class ImageService {
     })
   }
 
+  favouritedByUser(authorId: string) {
+    return this.prisma.image.findMany({
+      where: {
+        userFavouriteIds: {
+          has: authorId,
+        },
+      },
+    })
+  }
+
   get(id: string): Promise<ImageModelWithExtras> {
     return this.prisma.image
       .findUnique({

@@ -152,6 +152,16 @@ export class AlbumService {
     })
   }
 
+  favouritedByUser(authorId: string) {
+    return this.prisma.album.findMany({
+      where: {
+        userFavouriteIds: {
+          has: authorId,
+        },
+      },
+    })
+  }
+
   get(id: string): Promise<AlbumModelWithExtras> {
     return this.prisma.album
       .findUnique({

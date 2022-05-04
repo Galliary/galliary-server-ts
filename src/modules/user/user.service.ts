@@ -151,6 +151,16 @@ export class UserService {
     })
   }
 
+  favouritedByUser(authorId: string) {
+    return this.prisma.user.findMany({
+      where: {
+        userFavouriteIds: {
+          has: authorId,
+        },
+      },
+    })
+  }
+
   update(author: JwtUser, userId: string, input: UpdateUserInput) {
     if (
       author.id !== userId &&

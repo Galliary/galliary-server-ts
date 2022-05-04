@@ -18,11 +18,14 @@ import { AlbumService } from 'modules/album/album.service'
 import { SearchUserDocument } from 'models/search-document.model'
 import { WithPermissions } from 'decorators/with-permissions.decorator'
 import { Permissions } from 'utils/permissions'
+import { ImageModel } from 'models/image.model'
+import { ImageService } from 'modules/image/image.service'
 
 @Resolver(() => UserModel)
 export class UserResolver {
   constructor(
     private readonly service: UserService,
+    private readonly imageService: ImageService,
     private readonly albumService: AlbumService,
   ) {}
 
@@ -41,10 +44,34 @@ export class UserResolver {
     return this.service.search(query)
   }
 
+  @ResolveField(() => [ImageModel])
+  @UseGuards(JwtAuthGuard)
+  images(@Parent() user: UserModel) {
+    return this.imageService.byAuthor(user.id)
+  }
+
   @ResolveField(() => [AlbumModel])
   @UseGuards(JwtAuthGuard)
   albums(@Parent() user: UserModel) {
     return this.albumService.byAuthor(user.id)
+  }
+
+  @ResolveField(() => [AlbumModel])
+  @UseGuards(JwtAuthGuard)
+  favouriteAlbums(@Parent() user: UserModel) {
+    return this.albumService.favouritedByUser(user.id)
+  }
+
+  @ResolveField(() => [ImageModel])
+  @UseGuards(JwtAuthGuard)
+  favouriteImages(@Parent() user: UserModel) {
+    return this.imageService.favouritedByUser(user.id)
+  }
+
+  @ResolveField(() => [UserModel])
+  @UseGuards(JwtAuthGuard)
+  favouriteUsers(@Parent() user: UserModel) {
+    return this.service.favouritedByUser(user.id)
   }
 
   @Mutation(() => Boolean)

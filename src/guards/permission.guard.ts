@@ -1,12 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
-import { Observable } from 'rxjs'
 import { GqlExecutionContext } from '@nestjs/graphql'
-import { PermissionManager, Permissions } from 'utils/permissions'
+import { Permissions } from 'utils/permissions'
 import { Reflector } from '@nestjs/core'
-import { UserModel } from 'models/user.model'
 import { ForbiddenError } from 'apollo-server-express'
-import { UserService } from 'modules/user/user.service'
-import { JwtPayload, JwtUser } from 'modules/auth/strategies/jwt.strategy'
+import { JwtUser } from 'modules/auth/strategies/jwt.strategy'
 
 @Injectable()
 export class PermissionGuard implements CanActivate {

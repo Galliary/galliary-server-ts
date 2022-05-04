@@ -15,6 +15,7 @@ import { ReportModule } from 'modules/report/report.module'
 import { MeiliSearchModule } from 'nestjs-meilisearch'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { AuthModule } from 'modules/auth/auth.module'
+import { FavouriteModule } from 'modules/favourite/favourite.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuthModule } from 'modules/auth/auth.module'
     ImageModule,
     AlbumModule,
     ReportModule,
+    FavouriteModule,
     ThrottlerModule.forRoot({
       ttl: 60,
       limit: 5,
