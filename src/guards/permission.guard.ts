@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { GqlExecutionContext } from '@nestjs/graphql'
-import { Permissions } from 'utils/permissions'
+import { ANON_PERMISSIONS, Permissions } from 'utils/permissions'
 import { Reflector } from '@nestjs/core'
 import { ForbiddenError } from 'apollo-server-express'
 import { JwtUser } from 'modules/auth/strategies/jwt.strategy'
@@ -19,6 +19,7 @@ export class PermissionGuard implements CanActivate {
       'permissions',
       context.getHandler(),
     )
+
     if (!permissions) {
       return false
     }
@@ -26,7 +27,9 @@ export class PermissionGuard implements CanActivate {
     const ctx = GqlExecutionContext.create(context)
     const user = ctx.getContext().req.user as JwtUser
 
-    const hasPermission = user.permissions.has(...permissions)
+    const hasPermission = user
+      ? user.permissions.has(...permissions)
+      : ANON_PERMISSIONS.has(...permissions)
 
     if (hasPermission) {
       return true

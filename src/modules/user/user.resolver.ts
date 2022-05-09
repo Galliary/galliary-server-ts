@@ -20,8 +20,11 @@ import { WithPermissions } from 'decorators/with-permissions.decorator'
 import { Permissions } from 'utils/permissions'
 import { ImageModel } from 'models/image.model'
 import { ImageService } from 'modules/image/image.service'
+import { SimplePaginationArgs } from 'errors'
+import { PermissionGuard } from 'guards/permission.guard'
 
 @Resolver(() => UserModel)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class UserResolver {
   constructor(
     private readonly service: UserService,
@@ -30,12 +33,12 @@ export class UserResolver {
   ) {}
 
   @Query(() => UserModel, { nullable: true })
-  @UseGuards(JwtAuthGuard)
+  @WithPermissions(Permissions.VIEW_ENTITIES)
   user(
     @CurrentUser() user: JwtUser,
     @Args('id', { nullable: true }) id?: string,
   ) {
-    return this.service.get(id ?? user.id)
+    return this.service.get(id ?? user?.id)
   }
 
   @Query(() => [SearchUserDocument])
@@ -45,48 +48,68 @@ export class UserResolver {
   }
 
   @ResolveField(() => [ImageModel])
-  @UseGuards(JwtAuthGuard)
-  images(@Parent() user: UserModel) {
-    return this.imageService.byAuthor(user.id)
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  images(
+    @CurrentUser() user: JwtUser,
+    @Parent() author: UserModel,
+    @Args() args: SimplePaginationArgs,
+  ) {
+    return this.imageService.byAuthor(author.id, user, args)
   }
 
   @ResolveField(() => [AlbumModel])
-  @UseGuards(JwtAuthGuard)
-  albums(@Parent() user: UserModel) {
-    return this.albumService.byAuthor(user.id)
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  albums(
+    @CurrentUser() user: JwtUser,
+    @Parent() author: UserModel,
+    @Args() args: SimplePaginationArgs,
+  ) {
+    return this.albumService.byAuthor(author.id, user, args)
   }
 
   @ResolveField(() => [AlbumModel])
-  @UseGuards(JwtAuthGuard)
-  favouriteAlbums(@Parent() user: UserModel) {
-    return this.albumService.favouritedByUser(user.id)
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  favouriteAlbums(
+    @CurrentUser() user: JwtUser,
+    @Parent() author: UserModel,
+    @Args() args: SimplePaginationArgs,
+  ) {
+    return this.albumService.favouritedByUser(author.id, user, args)
   }
 
   @ResolveField(() => [ImageModel])
-  @UseGuards(JwtAuthGuard)
-  favouriteImages(@Parent() user: UserModel) {
-    return this.imageService.favouritedByUser(user.id)
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  favouriteImages(
+    @CurrentUser() user: JwtUser,
+    @Parent() author: UserModel,
+    @Args() args: SimplePaginationArgs,
+  ) {
+    return this.imageService.favouritedByUser(author.id, user, args)
   }
 
   @ResolveField(() => [UserModel])
-  @UseGuards(JwtAuthGuard)
-  favouriteUsers(@Parent() user: UserModel) {
-    return this.service.favouritedByUser(user.id)
+  @WithPermissions(Permissions.VIEW_ENTITIES)
+  favouriteUsers(
+    @CurrentUser() user: JwtUser,
+    @Parent() author: UserModel,
+    @Args() args: SimplePaginationArgs,
+  ) {
+    return this.service.favouritedByUser(author.id, user, args)
   }
 
   @Mutation(() => Boolean)
-  createUser(@Args() input: CreateUserInput) {
-    return this.service.create(input)
-  }
-
-  @Mutation(() => Boolean)
-  @UseGuards(JwtAuthGuard)
+  @WithPermissions(Permissions.UPDATE_OWNED_ENTITIES)
   updateUser(
     @CurrentUser() author: JwtUser,
     @Args('authorId') authorId: string,
     @Args() input: UpdateUserInput,
   ) {
     return this.service.update(author, authorId, input)
+  }
+
+  @Mutation(() => Boolean)
+  createUser(@Args() input: CreateUserInput) {
+    return this.service.create(input)
   }
 
   @Mutation(() => JwtResponse)

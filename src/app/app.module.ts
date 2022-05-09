@@ -8,7 +8,7 @@ import { AlbumModule } from 'modules/album/album.module'
 import { UserModule } from 'modules/user/user.module'
 import { PassportModule } from '@nestjs/passport'
 import { ConfigItem, ConfigService } from 'services/config.service'
-import { GraphQLError, GraphQLFormattedError } from 'graphql'
+import { GraphQLError, GraphQLFormattedError, GraphQLScalarType } from 'graphql'
 import { GraphQLUpload, graphqlUploadExpress } from 'graphql-upload'
 import { ImageModule } from 'modules/image/image.module'
 import { ReportModule } from 'modules/report/report.module'
@@ -38,7 +38,6 @@ import { FavouriteModule } from 'modules/favourite/favourite.module'
       driver: ApolloDriver,
       sortSchema: true,
       autoSchemaFile: join(process.cwd(), 'generated/schema.gql'),
-      resolvers: { Upload: GraphQLUpload },
       subscriptions: {
         'graphql-ws': true,
       },

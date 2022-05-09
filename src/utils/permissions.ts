@@ -101,3 +101,7 @@ export const USER_DEFAULT_PERMISSIONS = PermissionManager.add(
     Permissions.VIEW_ENTITIES,
   ],
 )
+
+export const ANON_PERMISSIONS = new PermissionManager(
+  PermissionManager.add(Permissions.NONE, [Permissions.VIEW_ENTITIES]),
+)

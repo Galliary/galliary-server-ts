@@ -44,9 +44,11 @@ export class UserModel implements Omit<User, 'hashedPassword'> {
   @Field(() => [PremiumFeature])
   premiumFeatures: PremiumFeature[]
 
-  @Field(() => [])
   @Field(() => [String])
   userFavouriteIds: string[]
+
+  @Field(() => [UserModel], { nullable: true })
+  userFavourites?: UserModel[] | null
 
   @Field(() => String)
   username: string

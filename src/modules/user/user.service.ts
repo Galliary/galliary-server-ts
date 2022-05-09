@@ -14,7 +14,7 @@ import { Hits, MeiliSearch } from 'meilisearch'
 import { User, UserConnectionType } from '@prisma/client'
 import { SearchUserDocument } from 'models/search-document.model'
 import { SearchIndex } from 'utils/search'
-import { UserErrorIds } from 'errors'
+import { SimplePaginationArgs, UserErrorIds } from 'errors'
 import { passValue } from 'utils/handlers'
 import { TokenService } from 'modules/token/token.service'
 import { Profile as DiscordProfile } from 'passport-discord'
@@ -151,13 +151,25 @@ export class UserService {
     })
   }
 
-  favouritedByUser(authorId: string) {
+  favouritedByUser(
+    authorId: string,
+    user?: JwtUser,
+    args: SimplePaginationArgs = {},
+  ) {
     return this.prisma.user.findMany({
       where: {
         userFavouriteIds: {
           has: authorId,
         },
       },
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
+        },
+      },
+      ...args,
     })
   }
 

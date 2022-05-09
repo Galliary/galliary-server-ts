@@ -1,5 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql'
 import { Image, LockingStatus, SafetyRating } from '@prisma/client'
+import { UserModel } from 'models/user.model'
 
 @ObjectType('Image')
 export class ImageModel implements Image {
@@ -11,6 +12,9 @@ export class ImageModel implements Image {
 
   @Field(() => String)
   authorId: string
+
+  @Field(() => UserModel, { nullable: true })
+  author?: UserModel | null
 
   @Field(() => Date)
   createdAt: Date
@@ -41,10 +45,7 @@ export class ImageModel implements Image {
 
   @Field(() => [String])
   userFavouriteIds: string[]
-}
 
-@ObjectType('RichImage')
-export class ImageModelWithExtras extends ImageModel {
-  @Field(() => String)
-  imageUrl: string
+  @Field(() => [UserModel], { nullable: true })
+  userFavourites?: UserModel[] | null
 }

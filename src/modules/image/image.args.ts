@@ -1,7 +1,8 @@
-import { ArgsType, Field, Int } from '@nestjs/graphql'
+import { ArgsType, Field, InputType, Int } from '@nestjs/graphql'
 import { IsOptional, Max, Min } from 'class-validator'
 
 @ArgsType()
+@InputType()
 export class GetImageArgs {
   @Field(() => Int)
   @Min(0)

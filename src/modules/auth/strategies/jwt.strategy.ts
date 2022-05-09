@@ -4,17 +4,18 @@ import { ExtractJwt, Strategy } from 'passport-jwt'
 import { ConfigItem, ConfigService } from 'services/config.service'
 import { Field, ObjectType } from '@nestjs/graphql'
 import { PermissionManager } from 'utils/permissions'
+import { Maybe } from 'graphql/jsutils/Maybe'
 
 export interface JwtPayload {
   uid: string
   pem: number
 }
 
-export interface JwtUser {
+export type JwtUser = Maybe<{
   id: string
   permissions: PermissionManager
   jwt: JwtPayload
-}
+}>
 
 @ObjectType()
 export class JwtResponse {

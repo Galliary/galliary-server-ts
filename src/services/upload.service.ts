@@ -3,8 +3,6 @@ import { PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { extension, lookup } from 'mime-types'
 import { SUPPORTED_UPLOAD_MIME_TYPES } from 'consts'
 import { Injectable } from '@nestjs/common'
-import { FileUpload } from 'graphql-upload'
-import { Upload } from '@aws-sdk/lib-storage'
 import { ApolloError, UserInputError } from 'apollo-server-express'
 import { UploadErrorIds } from 'errors'
 
@@ -22,31 +20,35 @@ export class UploadService {
   private static params(
     directory: string,
     name: string,
-    file: FileUpload,
+    file: Express.Multer.File,
   ): PutObjectCommand['input'] {
     return {
       Bucket: ConfigService.get(ConfigItem.CDNSpace),
       Key: `${directory}/${name}`,
-      Body: file.createReadStream(),
       ACL: 'public-read',
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      ContentLength: file.size,
     }
   }
 
   public async upload(
     directory: string,
     name: string,
-    file: FileUpload,
+    file: Express.Multer.File,
   ): Promise<boolean> {
     try {
       const params = UploadService.params(directory, name, file)
 
-      const parallel = new Upload({
-        client: this.client,
-        leavePartsOnError: false,
-        params,
-      })
+      // const parallel = new Upload({
+      //   client: this.client,
+      //   leavePartsOnError: false,
+      //   params,
+      // })
 
-      await parallel.done()
+      await this.client.putObject(params)
+
+      // await parallel.done()
 
       return true
     } catch (error) {
@@ -60,13 +62,13 @@ export class UploadService {
     id: string,
     albumId: string,
     authorId: string,
-    file: FileUpload,
+    file: Express.Multer.File,
   ): Promise<boolean> {
     if (!SUPPORTED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
       throw new UserInputError(UploadErrorIds.InvalidExtension)
     }
 
-    const extLookup = lookup(file.filename)
+    const extLookup = lookup(file.originalname)
     const ext = extLookup && extension(extLookup)
 
     return this.upload(
@@ -80,7 +82,7 @@ export class UploadService {
     id: string,
     albumId: string,
     authorId: string,
-    files: FileUpload[],
+    files: Express.Multer.File[],
   ) {
     for (const file of files) {
       await this.uploadImageToAlbum(id, albumId, authorId, file)
@@ -90,24 +92,27 @@ export class UploadService {
   public uploadAlbumCover(
     id: string,
     authorId: string,
-    file: FileUpload,
+    file: Express.Multer.File,
   ): Promise<boolean> {
     if (!SUPPORTED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
       throw new UserInputError(UploadErrorIds.InvalidExtension)
     }
 
-    const extLookup = lookup(file.filename)
+    const extLookup = lookup(file.originalname)
     const ext = extLookup && extension(extLookup)
 
     return this.upload(`users/${authorId}/albums/${id}`, `cover.${ext}`, file)
   }
 
-  public uploadUserBanner(userId: string, file: FileUpload): Promise<boolean> {
+  public uploadUserBanner(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<boolean> {
     if (!SUPPORTED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
       throw new UserInputError(UploadErrorIds.InvalidExtension)
     }
 
-    const extLookup = lookup(file.filename)
+    const extLookup = lookup(file.originalname)
     const ext = extLookup && extension(extLookup)
 
     return this.upload(`users/${userId}`, `banner.${ext}`, file)

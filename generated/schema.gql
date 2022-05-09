@@ -3,6 +3,7 @@
 # ------------------------------------------------------
 
 type Album {
+  author: User
   authorId: String!
   colors: [Int!]!
   coverExt: String!
@@ -10,11 +11,13 @@ type Album {
   description: String
   groupId: String
   id: String!
+  images: [Image!]
   lockStatus: LockingStatus!
   rating: SafetyRating!
   title: String
   updatedAt: DateTime!
   userFavouriteIds: [String!]!
+  userFavourites: [User!]
 }
 
 """
@@ -22,8 +25,15 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+input GetImageArgs {
+  amount: Int = 10
+  cursor: Int = 0
+}
+
 type Image {
+  album: Album!
   albumId: String!
+  author: User
   authorId: String!
   colors: [Int!]!
   createdAt: DateTime!
@@ -36,6 +46,7 @@ type Image {
   title: String
   updatedAt: DateTime!
   userFavouriteIds: [String!]!
+  userFavourites: [User!]
 }
 
 type JwtResponse {
@@ -52,6 +63,8 @@ type Mutation {
   createAlbum(colors: [Int!]!, description: String, title: String): Album!
   createImage(albumId: String!, colors: [Int!]!, description: String, imageExt: String, title: String): Image!
   createUser(bio: String, email: String!, nickname: String, password: String, username: String!): Boolean!
+  deleteAlbum(albumId: String!): Boolean!
+  deleteImage(imageId: String!): Boolean!
   favouriteAlbum(albumId: String!, unfavourite: Boolean!): Boolean!
   favouriteImage(imageId: String!, unfavourite: Boolean!): Boolean!
   favouriteUser(unfavourite: Boolean!, userId: String!): Boolean!
@@ -59,10 +72,8 @@ type Mutation {
   reportAlbum(albumId: String!, reason: String!): Boolean!
   reportImage(imageId: String!, reason: String!): Boolean!
   reportUser(reason: String!, userId: String!): Boolean!
-  updateAlbum(albumId: String!, input: UpdateAlbumInput!): Boolean!
-  updateAlbumCover(albumId: String!, coverImage: Upload!): Boolean!
-  updateImage(imageId: String!, input: UpdateImageInput!): Boolean!
-  updateImageFile(imageFile: Upload!, imageId: String!): Boolean!
+  updateAlbum(albumId: String!, input: UpdateAlbumInput!): Album!
+  updateImage(imageId: String!, input: UpdateImageInput!): Image!
   updateUser(authorId: String!, bio: String, nickname: String): Boolean!
 }
 
@@ -72,10 +83,11 @@ enum PremiumFeature {
 }
 
 type Query {
-  album(id: String!): RichAlbum
-  albums(amount: Int = 10, cursor: Int = 0): [RichAlbum!]!
-  image(id: String!): RichImage
-  images(amount: Int = 10, cursor: Int = 0): [RichImage!]!
+  album(id: String!): Album
+  albums(amount: Int = 10, cursor: Int = 0): [Album!]!
+  image(id: String!): Image
+  images(amount: Int = 10, cursor: Int = 0): [Image!]!
+  imagesForAlbum(albumId: String!, args: GetImageArgs!): [Image!]!
   report(id: String!): Report
   reports: [Report!]!
   reportsForAlbum(albumId: String!): [Report!]!
@@ -101,39 +113,6 @@ type Report {
   reporteeId: String
   user: User
   userId: String
-}
-
-type RichAlbum {
-  authorId: String!
-  colors: [Int!]!
-  coverExt: String!
-  coverUrl: String!
-  createdAt: DateTime!
-  description: String
-  groupId: String
-  id: String!
-  lockStatus: LockingStatus!
-  rating: SafetyRating!
-  title: String
-  updatedAt: DateTime!
-  userFavouriteIds: [String!]!
-}
-
-type RichImage {
-  albumId: String!
-  authorId: String!
-  colors: [Int!]!
-  createdAt: DateTime!
-  description: String
-  groupId: String
-  id: String!
-  imageExt: String!
-  imageUrl: String!
-  lockStatus: LockingStatus!
-  rating: SafetyRating!
-  title: String
-  updatedAt: DateTime!
-  userFavouriteIds: [String!]!
 }
 
 enum SafetyRating {
@@ -176,11 +155,8 @@ input UpdateImageInput {
   title: String
 }
 
-"""The `Upload` scalar type represents a file upload."""
-scalar Upload
-
 type User {
-  albums: [Album!]
+  albums(skip: Float, take: Float): [Album!]
   avatarSourceId: String
   avatarUrl: String
   badges: [UserBadge!]!
@@ -188,17 +164,18 @@ type User {
   bio: String
   createdAt: DateTime!
   email: String!
-  favouriteAlbums: [Album!]
-  favouriteImages: [Image!]
-  favouriteUsers: [User!]
+  favouriteAlbums(skip: Float, take: Float): [Album!]
+  favouriteImages(skip: Float, take: Float): [Image!]
+  favouriteUsers(skip: Float, take: Float): [User!]
   id: String!
-  images: [Image!]
+  images(skip: Float, take: Float): [Image!]
   lockStatus: LockingStatus!
   nickname: String
   permissions: Int!
   premiumFeatures: [PremiumFeature!]!
   updatedAt: DateTime!
   userFavouriteIds: [String!]!
+  userFavourites: [User!]
   username: String!
 }
 

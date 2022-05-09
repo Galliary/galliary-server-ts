@@ -9,14 +9,13 @@ import { snowflake } from 'utils/snowflake'
 import { GetAlbumsArgs } from 'modules/album/album.args'
 import { extension } from 'mime-types'
 import { UploadService } from 'services/upload.service'
-import { FileUpload } from 'graphql-upload'
 import { UserInputError } from 'apollo-server-express'
-import { AlbumErrorIds } from 'errors'
+import { AlbumErrorIds, SimplePaginationArgs } from 'errors'
 import { JwtUser } from 'modules/auth/strategies/jwt.strategy'
 import { Permissions } from 'utils/permissions'
-import { AlbumModel, AlbumModelWithExtras } from 'models/album.model'
+import { AlbumModel } from 'models/album.model'
 import { InjectMeiliSearch } from 'nestjs-meilisearch'
-import { Hits, MeiliSearch, SearchResponse } from 'meilisearch'
+import { Hits, MeiliSearch } from 'meilisearch'
 import { SearchIndex } from 'utils/search'
 import { UserModel } from 'models/user.model'
 import { SearchDocument } from 'models/search-document.model'
@@ -87,6 +86,14 @@ export class AlbumService {
       })
   }
 
+  getImagesInAlbum(albumId: string) {
+    return this.prisma.image.findMany({ where: { albumId } })
+  }
+
+  getAuthor(authorId: string) {
+    return this.prisma.user.findUnique({ where: { id: authorId } })
+  }
+
   async update(
     author: JwtUser,
     albumId: string,
@@ -114,11 +121,15 @@ export class AlbumService {
           .index(SearchIndex.Albums)
           .updateDocuments([AlbumService.toIndexDocument(author, data)])
 
-        return true
+        return data
       })
   }
 
-  async updateCover(author: JwtUser, albumId: string, coverImage: FileUpload) {
+  async updateCover(
+    author: JwtUser,
+    albumId: string,
+    coverImage: Express.Multer.File,
+  ) {
     const album = await this.get(albumId)
     if (!album) {
       throw new UserInputError(AlbumErrorIds.NotFound)
@@ -139,61 +150,90 @@ export class AlbumService {
       throw new UserInputError(AlbumErrorIds.CoverInvalidMimeType)
     }
 
-    await this.update(author, albumId, { coverExt })
-
-    return true
+    return this.update(author, albumId, { coverExt })
   }
 
-  byAuthor(authorId: string) {
+  byAuthor(authorId: string, user?: JwtUser, args: SimplePaginationArgs = {}) {
     return this.prisma.album.findMany({
       where: {
         authorId,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
+        },
+      },
+      ...args,
     })
   }
 
-  favouritedByUser(authorId: string) {
+  async delete(author: JwtUser, albumId: string) {
+    const album = await this.get(albumId)
+
+    if (
+      album.authorId !== author.id &&
+      !author.permissions.has(Permissions.MODERATE_ENTITIES)
+    ) {
+      throw new UserInputError(AlbumErrorIds.NoPermissionToEdit)
+    }
+
+    return this.prisma.album
+      .delete({
+        where: {
+          id: albumId,
+        },
+      })
+      .then(() => true)
+  }
+
+  favouritedByUser(
+    authorId: string,
+    user?: JwtUser,
+    args: SimplePaginationArgs = {},
+  ) {
     return this.prisma.album.findMany({
       where: {
-        userFavouriteIds: {
-          has: authorId,
+        userFavourites: {
+          some: {
+            id: authorId,
+          },
         },
+      },
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
+        },
+      },
+      ...args,
+    })
+  }
+
+  get(id: string) {
+    return this.prisma.album.findUnique({
+      where: {
+        id,
       },
     })
   }
 
-  get(id: string): Promise<AlbumModelWithExtras> {
-    return this.prisma.album
-      .findUnique({
-        where: {
-          id,
+  all(user?: JwtUser, args: GetAlbumsArgs = { cursor: 0, amount: 10 }) {
+    return this.prisma.album.findMany({
+      take: args.amount,
+      skip: args.cursor * args.amount,
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
         },
-      })
-      .then((item) => ({
-        ...item,
-        coverUrl: UploadService.getUrlForAlbumCover(
-          item.authorId,
-          item.id,
-          item.coverExt,
-        ),
-      }))
-  }
-
-  all(args: GetAlbumsArgs): Promise<AlbumModelWithExtras[]> {
-    return this.prisma.album
-      .findMany({
-        take: args.amount,
-        skip: args.cursor * args.amount,
-      })
-      .then((items) =>
-        items.map((item) => ({
-          ...item,
-          coverUrl: UploadService.getUrlForAlbumCover(
-            item.authorId,
-            item.id,
-            item.coverExt,
-          ),
-        })),
-      )
+      },
+    })
   }
 }

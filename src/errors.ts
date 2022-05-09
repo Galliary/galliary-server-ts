@@ -1,3 +1,6 @@
+import { ArgsType, Field, InputType } from '@nestjs/graphql'
+import { IsOptional, Max, Min } from 'class-validator'
+
 export enum AlbumErrorIds {
   NotFound = 'errors.albums.not-found',
   NoPermissionToEdit = 'errors.albums.no-permission-to-edit',
@@ -25,4 +28,20 @@ export enum ReportErrorIds {
 export enum UserErrorIds {
   InvalidPermissions = 'errors.users.invalid-permissions',
   NoPermissionToEdit = 'errors.albums.no-permission-to-edit',
+}
+
+@ArgsType()
+@InputType()
+export class SimplePaginationArgs {
+  @Field(() => Number, { nullable: true })
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  take?: number
+
+  @Field(() => Number, { nullable: true })
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  skip?: number
 }

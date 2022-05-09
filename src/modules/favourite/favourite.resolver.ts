@@ -12,14 +12,15 @@ import {
   FavouriteImageInput,
   FavouriteUserInput,
 } from 'modules/favourite/favourite.inputs'
+import { PermissionGuard } from 'guards/permission.guard'
 
 @Resolver(() => ReportModel)
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class FavouriteResolver {
   constructor(private readonly service: FavouriteService) {}
 
   @Mutation(() => Boolean)
-  @WithPermissions(Permissions.CREATE_REPORTS)
+  @WithPermissions(Permissions.CREATE_FAVOURITES)
   favouriteAlbum(
     @CurrentUser() author: JwtUser,
     @Args() input: FavouriteAlbumInput,
@@ -28,7 +29,7 @@ export class FavouriteResolver {
   }
 
   @Mutation(() => Boolean)
-  @WithPermissions(Permissions.CREATE_REPORTS)
+  @WithPermissions(Permissions.CREATE_FAVOURITES)
   favouriteImage(
     @CurrentUser() author: JwtUser,
     @Args() input: FavouriteImageInput,
@@ -37,7 +38,7 @@ export class FavouriteResolver {
   }
 
   @Mutation(() => Boolean)
-  @WithPermissions(Permissions.CREATE_REPORTS)
+  @WithPermissions(Permissions.CREATE_FAVOURITES)
   favouriteUser(
     @CurrentUser() author: JwtUser,
     @Args() input: FavouriteUserInput,

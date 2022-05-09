@@ -6,17 +6,15 @@ import { JwtUser } from 'modules/auth/strategies/jwt.strategy'
 import { snowflake } from 'utils/snowflake'
 import { Permissions } from 'utils/permissions'
 import { UserInputError } from 'apollo-server-express'
-import { ImageErrorIds } from 'errors'
-import { FileUpload } from 'graphql-upload'
+import { AlbumErrorIds, ImageErrorIds, SimplePaginationArgs } from 'errors'
 import { extension } from 'mime-types'
 import { UploadService } from 'services/upload.service'
-import { ImageModel, ImageModelWithExtras } from 'models/image.model'
+import { ImageModel } from 'models/image.model'
 import { GetImageArgs } from 'modules/image/image.args'
 import { InjectMeiliSearch } from 'nestjs-meilisearch'
 import { Hits, MeiliSearch } from 'meilisearch'
 import { SearchIndex } from 'utils/search'
 import { UserModel } from 'models/user.model'
-import { passValue } from 'utils/handlers'
 import { SearchDocument } from 'models/search-document.model'
 
 @Injectable()
@@ -86,7 +84,6 @@ export class ImageService {
   }
 
   async update(author: JwtUser, imageId: string, input: UpdateImageInput) {
-    console.log({ imageId })
     const image = await this.get(imageId)
 
     if (
@@ -104,18 +101,19 @@ export class ImageService {
           updatedAt: new Date(),
         },
       })
-      .then((data) =>
+      .then((data) => {
         this.meili
           .index(SearchIndex.Images)
-          .updateDocuments([ImageService.toIndexDocument(author, data)]),
-      )
-      .then(passValue(true))
+          .updateDocuments([ImageService.toIndexDocument(author, data)])
+
+        return data
+      })
   }
 
   async updateImageFile(
     author: JwtUser,
     imageId: string,
-    imageFile: FileUpload,
+    imageFile: Express.Multer.File,
   ) {
     const image = await this.get(imageId)
     if (!image) {
@@ -142,63 +140,129 @@ export class ImageService {
       throw new UserInputError(ImageErrorIds.InvalidMimeType)
     }
 
-    await this.update(author, imageId, { imageExt })
-
-    return true
+    return this.update(author, imageId, { imageExt })
   }
 
-  byAuthor(authorId: string) {
+  getAlbum(albumId: string, user?: JwtUser) {
+    return this.prisma.album.findUnique({
+      where: {
+        id: albumId,
+      },
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
+        },
+      },
+    })
+  }
+
+  byAuthor(authorId: string, user?: JwtUser, args: SimplePaginationArgs = {}) {
     return this.prisma.image.findMany({
       where: {
         authorId,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
+        },
+      },
+      ...args,
     })
   }
 
-  favouritedByUser(authorId: string) {
+  async delete(author: JwtUser, imageId: string) {
+    const image = await this.get(imageId)
+
+    if (
+      image.authorId !== author.id &&
+      !author.permissions.has(Permissions.MODERATE_ENTITIES)
+    ) {
+      throw new UserInputError(AlbumErrorIds.NoPermissionToEdit)
+    }
+
+    return this.prisma.image
+      .delete({
+        where: {
+          id: imageId,
+        },
+      })
+      .then(() => true)
+  }
+
+  favouritedByUser(
+    authorId: string,
+    user?: JwtUser,
+    args: SimplePaginationArgs = {},
+  ) {
     return this.prisma.image.findMany({
       where: {
-        userFavouriteIds: {
-          has: authorId,
+        userFavourites: {
+          some: {
+            id: authorId,
+          },
+        },
+      },
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
+        },
+      },
+      ...args,
+    })
+  }
+
+  get(id: string) {
+    return this.prisma.image.findUnique({
+      where: { id },
+    })
+  }
+
+  all(args: GetImageArgs, user?: JwtUser) {
+    return this.prisma.image.findMany({
+      take: args.amount,
+      skip: args.cursor * args.amount,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
         },
       },
     })
   }
 
-  get(id: string): Promise<ImageModelWithExtras> {
-    return this.prisma.image
-      .findUnique({
-        where: {
-          id,
-        },
-      })
-      .then((item) => ({
-        ...item,
-        imageUrl: UploadService.getUrlForImage(
-          item.authorId,
-          item.albumId,
-          item.id,
-          item.imageExt,
-        ),
-      }))
+  getAuthor(authorId: string) {
+    return this.prisma.user.findUnique({ where: { id: authorId } })
   }
 
-  all(args: GetImageArgs): Promise<ImageModelWithExtras[]> {
-    return this.prisma.image
-      .findMany({
-        take: args.amount,
-        skip: args.cursor * args.amount,
-      })
-      .then((items) =>
-        items.map((item) => ({
-          ...item,
-          imageUrl: UploadService.getUrlForImage(
-            item.authorId,
-            item.albumId,
-            item.id,
-            item.imageExt,
-          ),
-        })),
-      )
+  byAlbumId(
+    albumId: string,
+    user?: JwtUser,
+    args: GetImageArgs = { amount: 10, cursor: 0 },
+  ): Promise<ImageModel[]> {
+    return this.prisma.image.findMany({
+      where: {
+        albumId,
+      },
+      take: args.amount,
+      skip: args.cursor * args.amount,
+      include: {
+        userFavourites: {
+          where: {
+            id: user?.id,
+          },
+        },
+      },
+    })
   }
 }
