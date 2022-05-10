@@ -41,7 +41,11 @@ async function bootstrap() {
     ],
     origin:
       process.env.NODE_ENV === 'production'
-        ? ['https://galliary.com', 'https://api.galliary.com']
+        ? [
+            'https://galliary.com',
+            'https://www.galliary.com',
+            'https://api.galliary.com',
+          ]
         : 'http://localhost:3000',
   })
 
