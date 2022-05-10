@@ -1,33 +1,29 @@
-FROM node:16-alpine AS dev
+FROM node:16-alpine as builder
 
-WORKDIR /usr/src/app
+ENV NODE_ENV build
 
-COPY package*.json ./
+USER node
+WORKDIR /home/node
 
-RUN npm install
+COPY package.json ./
+COPY yarn.lock ./
+COPY prisma ./prisma/
+RUN yarn install --production --frozen-lockfile --link-duplicates
 
-COPY . .
+COPY --chown=node:node . .
+RUN yarn build
 
-RUN npm run build
+# ---
 
-FROM node:16.13.2-alpine3.15 as production
+FROM node:16-alpine
 
-ARG NODE_ENV=prod
-ENV NODE_ENV=${NODE_ENV}
+ENV NODE_ENV production
 
-WORKDIR /usr/src/app
+USER node
+WORKDIR /home/node
 
-COPY package*.json ./
+COPY --from=builder --chown=node:node /home/node/package*.json ./
+COPY --from=builder --chown=node:node /home/node/node_modules/ ./node_modules/
+COPY --from=builder --chown=node:node /home/node/dist/ ./dist/
 
-RUN npm install --only=production
-
-COPY . .
-
-COPY --from=dev /usr/src/app/dist ./dist
-
-
-ARG PORT=8080
-EXPOSE $PORT
-ENV PORT $PORT
-
-CMD ["node", "dist/main"]
+CMD ["yarn", "prod"]
