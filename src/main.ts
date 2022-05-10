@@ -8,6 +8,7 @@ import {
   UserBadge,
 } from '@prisma/client'
 import { ValidationPipe } from '@nestjs/common'
+import { PORT } from 'consts'
 
 registerEnumType(LockingStatus, {
   name: 'LockingStatus',
@@ -40,7 +41,7 @@ async function bootstrap() {
     ],
   })
 
-  await app.listen(8080)
+  await app.listen(PORT)
 }
 
 bootstrap()

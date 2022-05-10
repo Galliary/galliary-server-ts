@@ -9,3 +9,5 @@ export const SUPPORTED_UPLOAD_MIME_TYPES = [
 ]
 export const MAX_UPLOAD_FILE_SIZE = 64 * 1024 * 1024
 export const MAX_UPLOAD_FILE_COUNT = 8
+
+export const PORT = Number(process.env.PORT ?? 8080)
