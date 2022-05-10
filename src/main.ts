@@ -39,6 +39,10 @@ async function bootstrap() {
       'Authorization',
       'Accept',
     ],
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? ['https://galliary.com', 'https://api.galliary.com']
+        : 'http://localhost:3000',
   })
 
   await app.listen(PORT)
