@@ -42,19 +42,20 @@ export class ImageService {
   }
 
   search(query: string): Promise<Hits<SearchDocument>> {
-    return this.meili
-      .index(SearchIndex.Images)
-      .search<SearchDocument>(query)
-      .then((res) => res.hits)
-      .then((res) =>
-        res.map((item) => {
-          return {
-            ...item,
-            createdAt: new Date(item.createdAt),
-            updatedAt: new Date(item.updatedAt),
-          }
-        }),
-      )
+    return null
+    // return this.meili
+    //   .index(SearchIndex.Images)
+    //   .search<SearchDocument>(query)
+    //   .then((res) => res.hits)
+    //   .then((res) =>
+    //     res.map((item) => {
+    //       return {
+    //         ...item,
+    //         createdAt: new Date(item.createdAt),
+    //         updatedAt: new Date(item.updatedAt),
+    //       }
+    //     }),
+    //   )
   }
 
   create(author: JwtUser, input: CreateImageInput) {
@@ -74,10 +75,10 @@ export class ImageService {
         },
       })
       .then((data) => {
-        this.meili
-          .index(SearchIndex.Images)
-          .addDocuments([ImageService.toIndexDocument(author, data)])
-          .catch(console.error)
+        // this.meili
+        //   .index(SearchIndex.Images)
+        //   .addDocuments([ImageService.toIndexDocument(author, data)])
+        //   .catch(console.error)
 
         return data
       })
@@ -102,9 +103,9 @@ export class ImageService {
         },
       })
       .then((data) => {
-        this.meili
-          .index(SearchIndex.Images)
-          .updateDocuments([ImageService.toIndexDocument(author, data)])
+        // this.meili
+        //   .index(SearchIndex.Images)
+        //   .updateDocuments([ImageService.toIndexDocument(author, data)])
 
         return data
       })

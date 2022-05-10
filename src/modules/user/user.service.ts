@@ -41,19 +41,20 @@ export class UserService {
   }
 
   search(query: string): Promise<Hits<SearchUserDocument>> {
-    return this.meili
-      .index(SearchIndex.Users)
-      .search<SearchUserDocument>(query)
-      .then((res) => res.hits)
-      .then((res) =>
-        res.map((item) => {
-          return {
-            ...item,
-            createdAt: new Date(item.createdAt),
-            updatedAt: new Date(item.updatedAt),
-          }
-        }),
-      )
+    return null
+    // return this.meili
+    //   .index(SearchIndex.Users)
+    //   .search<SearchUserDocument>(query)
+    //   .then((res) => res.hits)
+    //   .then((res) =>
+    //     res.map((item) => {
+    //       return {
+    //         ...item,
+    //         createdAt: new Date(item.createdAt),
+    //         updatedAt: new Date(item.updatedAt),
+    //       }
+    //     }),
+    //   )
   }
 
   async validateUser(
@@ -116,10 +117,10 @@ export class UserService {
         },
       })
       .then((data) => {
-        this.meili
-          .index(SearchIndex.Users)
-          .addDocuments([UserService.toIndexDocument(data)])
-          .catch(console.error)
+        // this.meili
+        //   .index(SearchIndex.Users)
+        //   .addDocuments([UserService.toIndexDocument(data)])
+        //   .catch(console.error)
 
         return data
       })
@@ -189,10 +190,11 @@ export class UserService {
           updatedAt: new Date(),
         },
       })
-      .then((data) =>
-        this.meili
-          .index(SearchIndex.Users)
-          .updateDocuments([UserService.toIndexDocument(data)]),
+      .then(
+        (data) => null,
+        // this.meili
+        //   .index(SearchIndex.Users)
+        //   .updateDocuments([UserService.toIndexDocument(data)]),
       )
       .then(passValue(true))
   }

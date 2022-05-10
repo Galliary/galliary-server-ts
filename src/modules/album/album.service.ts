@@ -45,19 +45,20 @@ export class AlbumService {
   }
 
   search(query: string): Promise<Hits<SearchDocument>> {
-    return this.meili
-      .index(SearchIndex.Albums)
-      .search<SearchDocument>(query)
-      .then((res) => res.hits)
-      .then((res) =>
-        res.map((item) => {
-          return {
-            ...item,
-            createdAt: new Date(item.createdAt),
-            updatedAt: new Date(item.updatedAt),
-          }
-        }),
-      )
+    return null
+    // return this.meili
+    //   .index(SearchIndex.Albums)
+    //   .search<SearchDocument>(query)
+    //   .then((res) => res.hits)
+    //   .then((res) =>
+    //     res.map((item) => {
+    //       return {
+    //         ...item,
+    //         createdAt: new Date(item.createdAt),
+    //         updatedAt: new Date(item.updatedAt),
+    //       }
+    //     }),
+    //   )
   }
 
   async create(author: JwtUser, input: CreateAlbumInput) {
@@ -77,10 +78,10 @@ export class AlbumService {
         },
       })
       .then((data) => {
-        this.meili
-          .index(SearchIndex.Albums)
-          .addDocuments([AlbumService.toIndexDocument(author, data)])
-          .catch(console.error)
+        // this.meili
+        //   .index(SearchIndex.Albums)
+        //   .addDocuments([AlbumService.toIndexDocument(author, data)])
+        //   .catch(console.error)
 
         return data
       })
@@ -117,9 +118,9 @@ export class AlbumService {
         },
       })
       .then((data) => {
-        this.meili
-          .index(SearchIndex.Albums)
-          .updateDocuments([AlbumService.toIndexDocument(author, data)])
+        // this.meili
+        //   .index(SearchIndex.Albums)
+        //   .updateDocuments([AlbumService.toIndexDocument(author, data)])
 
         return data
       })
