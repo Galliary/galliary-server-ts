@@ -1,5 +1,5 @@
 import { parse } from 'dotenv'
-import { readFileSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import { CONFIG_FILE_NAME } from 'consts'
 
@@ -26,10 +26,18 @@ export enum ConfigItem {
   AuthRedirect = 'AUTH_REDIRECT',
 }
 
+const tryGetEnv = () => {
+  const envPath = join(process.cwd(), CONFIG_FILE_NAME)
+
+  if (existsSync(envPath)) {
+    return parse(readFileSync(envPath))
+  } else {
+    return process.env
+  }
+}
+
 export class ConfigService {
-  private static readonly env = parse(
-    readFileSync(join(process.cwd(), CONFIG_FILE_NAME)),
-  )
+  private static readonly env = tryGetEnv()
 
   static get(key: ConfigItem, throwIfEmpty = false): string {
     const value = this.env[key]
