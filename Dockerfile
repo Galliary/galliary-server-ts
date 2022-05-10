@@ -8,7 +8,7 @@ WORKDIR /home/node
 COPY package.json ./
 COPY yarn.lock ./
 COPY prisma ./prisma/
-RUN yarn install --production --frozen-lockfile --link-duplicates
+RUN yarn install --frozen-lockfile --link-duplicates
 
 COPY --chown=node:node . .
 RUN yarn build
